@@ -1974,8 +1974,6 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 		}, [onPreviewReadyChange, videoReady]);
 
 		useEffect(() => {
-			const resumePlayback = resumePlaybackAfterRebuildRef.current;
-			resumePlaybackAfterRebuildRef.current = false;
 			if (!pixiReady || !videoReady) return;
 
 			const video = videoRef.current;
@@ -1996,6 +1994,10 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 				return;
 			if (video.videoWidth === 0 || video.videoHeight === 0) return;
 
+			// Only consume the flag once a replacement transport is actually being built;
+			// earlier runs while the renderer is still rebuilding must leave it set.
+			const resumePlayback = resumePlaybackAfterRebuildRef.current;
+			resumePlaybackAfterRebuildRef.current = false;
 			const source = previewVideoSourceRef.current.getSource();
 			const videoTexture = Texture.from(source);
 
