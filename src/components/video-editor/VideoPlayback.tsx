@@ -88,6 +88,7 @@ import {
 	type ZoomTransitionEasing,
 } from "./types";
 import { isAnnotationActiveAtTime } from "./videoPlayback/annotationVisibility";
+import { getEffectiveNativeAspectRatio } from "./videoPlayback/effectiveAspectRatio";
 import { createClipPlayback, findPreviewClipAtTimelineTime } from "./videoPlayback/clipPlayback";
 import { DEFAULT_FOCUS } from "./videoPlayback/constants";
 import {
@@ -194,26 +195,6 @@ function toRendererErrorMessage(error: unknown): string {
 function summarizeRendererAttempts(attempts: readonly PixiRendererAttempt[]): string {
 	const details = attempts.map((attempt) => `${attempt.backend}: ${attempt.message}`).join(" | ");
 	return `No supported Pixi preview renderer was available. Attempted: ${details}`;
-}
-
-function getEffectiveNativeAspectRatio(
-	dimensions: { width: number; height: number } | null | undefined,
-	cropRegion?: import("./types").CropRegion,
-): number {
-	if (!dimensions || dimensions.height <= 0 || dimensions.width <= 0) {
-		return 16 / 9;
-	}
-
-	const cropWidth = cropRegion?.width ?? 1;
-	const cropHeight = cropRegion?.height ?? 1;
-	const effectiveWidth = dimensions.width * cropWidth;
-	const effectiveHeight = dimensions.height * cropHeight;
-
-	if (effectiveWidth <= 0 || effectiveHeight <= 0) {
-		return dimensions.width / dimensions.height;
-	}
-
-	return effectiveWidth / effectiveHeight;
 }
 
 interface VideoPlaybackProps {
