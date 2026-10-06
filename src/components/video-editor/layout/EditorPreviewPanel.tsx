@@ -80,14 +80,16 @@ type Props = {
 	setError: (message: string | null) => void;
 };
 
-const PREVIEW_RENDER_SCALE_LABELS: Record<PreviewRenderScale, string> = {
-	auto: "Auto",
-	native: "Full",
-	"1": "100%",
-	"0.75": "75%",
-	"0.5": "50%",
-	"0.25": "25%",
-};
+function getPreviewRenderScaleLabel(t: Props["t"], scale: PreviewRenderScale) {
+	switch (scale) {
+		case "auto":
+			return t("editor.preview.renderScaleAuto", "Auto");
+		case "native":
+			return t("editor.preview.renderScaleFull", "Full");
+		default:
+			return `${Math.round(Number(scale) * 100)}%`;
+	}
+}
 
 /** Leaf subscriber so the per-frame time never re-renders the whole panel. */
 function PlayheadTimeLabel() {
@@ -198,7 +200,7 @@ export function EditorPreviewPanel(props: Props) {
 								>
 									<span className="font-medium">
 										{t("editor.preview.renderScale", "Preview")}:{" "}
-										{PREVIEW_RENDER_SCALE_LABELS[previewRenderScale]}
+										{getPreviewRenderScaleLabel(t, previewRenderScale)}
 									</span>
 									<CaretDown className="h-3 w-3" />
 								</Button>
@@ -210,7 +212,7 @@ export function EditorPreviewPanel(props: Props) {
 										onClick={() => setPreviewRenderScale(scale)}
 										className="flex cursor-pointer items-center justify-between gap-3 text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
 									>
-										<span>{PREVIEW_RENDER_SCALE_LABELS[scale]}</span>
+										<span>{getPreviewRenderScaleLabel(t, scale)}</span>
 										{previewRenderScale === scale ? (
 											<Check className="h-3 w-3 text-[#2563EB]" />
 										) : null}

@@ -157,9 +157,12 @@ bool MFEncoder::initialize(const std::wstring& outputPath, int width, int height
     // The capture thread issues copies while the worker maps staging textures, so the shared
     // immediate context has to serialise those calls.
     ComPtr<ID3D11Multithread> multithread;
-    if (SUCCEEDED(device_->QueryInterface(IID_PPV_ARGS(&multithread))) && multithread) {
-        multithread->SetMultithreadProtected(TRUE);
+    hr = context_->QueryInterface(IID_PPV_ARGS(&multithread));
+    if (FAILED(hr) || !multithread) {
+        std::cerr << "ERROR: Failed to query ID3D11Multithread: 0x" << std::hex << hr << std::endl;
+        return false;
     }
+    multithread->SetMultithreadProtected(TRUE);
 
     // WGC window captures can change frame size while recording. Keep the muxer
     // output dimensions stable by compositing resized frames into this fixed
@@ -499,6 +502,9 @@ bool MFEncoder::writeNv12SampleLocked(const std::vector<uint8_t>& frameBuffer, i
 }
 
 bool MFEncoder::finalize() {
+    // Hold off any in-flight writeFrame() until teardown is done; it reads slots_ and initialized_.
+    std::lock_guard<std::mutex> captureLock(captureMutex_);
+
     if (initialized_) {
         drainQueue();
         stopWorker();

@@ -2083,7 +2083,6 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 			const blurFilters = [motionBlurFilterRef.current, zoomBlurFilterRef.current].filter(
 				(filter) => filter !== null,
 			);
-			let blurFiltersAttached = Boolean(videoEffectsContainer.filters?.length);
 			const syncMotionBlurFilters = () => {
 				const motionBlur = motionBlurFilterRef.current;
 				const zoomBlur = zoomBlurFilterRef.current;
@@ -2093,9 +2092,10 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 							motionBlur.velocity.y !== 0 ||
 							motionBlur.offset !== 0)) ||
 					(zoomBlur !== null && zoomBlur.strength !== 0);
+				// Read the live state: other effects also assign this container's filters.
+				const blurFiltersAttached = Boolean(videoEffectsContainer.filters?.length);
 				if (blurActive === blurFiltersAttached) return;
 				videoEffectsContainer.filters = blurActive ? blurFilters : null;
-				blurFiltersAttached = blurActive;
 			};
 
 			const applyTransform = (

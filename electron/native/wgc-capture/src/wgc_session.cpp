@@ -68,9 +68,12 @@ bool WgcSession::createD3DDevice() {
 
     // The capture callback and the encoder's readback worker share this immediate context.
     ComPtr<ID3D11Multithread> multithread;
-    if (SUCCEEDED(d3dDevice_.As(&multithread)) && multithread) {
-        multithread->SetMultithreadProtected(TRUE);
+    hr = d3dContext_.As(&multithread);
+    if (FAILED(hr) || !multithread) {
+        std::cerr << "ERROR: Failed to query ID3D11Multithread: 0x" << std::hex << hr << std::endl;
+        return false;
     }
+    multithread->SetMultithreadProtected(TRUE);
 
     // Report which GPU performs the capture; on hybrid laptops this matters for performance.
     ComPtr<IDXGIDevice> dxgiDevice;
