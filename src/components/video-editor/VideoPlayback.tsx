@@ -486,6 +486,8 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 		);
 		const clipRegionsRef = useRef(clipRegions);
 		const clipPlaybackRef = useRef<ReturnType<typeof createClipPlayback> | null>(null);
+		// Set when the transport is torn down mid-playback so its replacement can resume.
+		const resumePlaybackAfterRebuildRef = useRef(false);
 		const onPlaybackErrorRef = useRef(onError);
 		const timelineTimeRef = useRef(timeStore.get());
 		useEffect(() => {
@@ -1972,6 +1974,8 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 		}, [onPreviewReadyChange, videoReady]);
 
 		useEffect(() => {
+			const resumePlayback = resumePlaybackAfterRebuildRef.current;
+			resumePlaybackAfterRebuildRef.current = false;
 			if (!pixiReady || !videoReady) return;
 
 			const video = videoRef.current;
@@ -2035,7 +2039,7 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 			});
 			clipPlaybackRef.current = transport;
 			transport.seek(timelineTimeRef.current);
-			if (autoPlay)
+			if (autoPlay || resumePlayback)
 				void transport.play().catch((error) => onPlaybackErrorRef.current(String(error)));
 			const handleSeeked = () => {
 				isSeekingRef.current = false;
@@ -2054,6 +2058,7 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 			return () => {
 				video.removeEventListener("seeked", handleSeeked);
 				video.removeEventListener("seeking", handleSeeking);
+				resumePlaybackAfterRebuildRef.current = transport.isPlaying;
 				transport.dispose();
 				clipPlaybackRef.current = null;
 
