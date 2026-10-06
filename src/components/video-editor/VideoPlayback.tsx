@@ -1962,6 +1962,26 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 			const videoContainer = videoContainerRef.current;
 			if (!app || !videoSprite || !videoEffectsContainer || !videoContainer) return;
 
+			// Two full-frame filter passes run every frame even at zero strength, so only
+			// attach the blur filters while a blur is actually being drawn.
+			const blurFilters = [motionBlurFilterRef.current, zoomBlurFilterRef.current].filter(
+				(filter) => filter !== null,
+			);
+			let blurFiltersAttached = Boolean(videoEffectsContainer.filters?.length);
+			const syncMotionBlurFilters = () => {
+				const motionBlur = motionBlurFilterRef.current;
+				const zoomBlur = zoomBlurFilterRef.current;
+				const blurActive =
+					(motionBlur !== null &&
+						(motionBlur.velocity.x !== 0 ||
+							motionBlur.velocity.y !== 0 ||
+							motionBlur.offset !== 0)) ||
+					(zoomBlur !== null && zoomBlur.strength !== 0);
+				if (blurActive === blurFiltersAttached) return;
+				videoEffectsContainer.filters = blurActive ? blurFilters : null;
+				blurFiltersAttached = blurActive;
+			};
+
 			const applyTransform = (
 				transform: { scale: number; x: number; y: number },
 				focus: ZoomFocus,
@@ -1992,6 +2012,7 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 				state.x = appliedTransform.x;
 				state.y = appliedTransform.y;
 				state.appliedScale = appliedTransform.scale;
+				syncMotionBlurFilters();
 				setAnnotationSceneTransform((current) => {
 					if (
 						Math.abs(current.scale - appliedTransform.scale) < 0.001 &&
