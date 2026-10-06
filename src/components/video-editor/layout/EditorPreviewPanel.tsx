@@ -33,6 +33,7 @@ import type { useAnnotationRegionCommands } from "../hooks/useAnnotationRegionCo
 import type { useEditorPlaybackControls } from "../hooks/useEditorPlaybackControls";
 import type { useTimelineProjection } from "../hooks/useTimelineProjection";
 import type { useZoomRegionCommands } from "../hooks/useZoomRegionCommands";
+import { usePlaybackTime } from "../state/playbackTimeStore";
 import type { useAppearanceState } from "../state/useAppearanceState";
 import type { useTimelineState } from "../state/useTimelineState";
 import type { TimelineEditorHandle } from "../timeline/TimelineEditor";
@@ -52,7 +53,6 @@ type Props = {
 	previewAspectRatioValue: number;
 	videoPlaybackRef: RefObject<VideoPlaybackRef | null>;
 	timelineRef: RefObject<TimelineEditorHandle | null>;
-	currentTime: number;
 	isPlaying: boolean;
 	previewVolume: number;
 	setPreviewVolume: Dispatch<SetStateAction<number>>;
@@ -75,7 +75,7 @@ type Props = {
 	setDuration: Dispatch<SetStateAction<number>>;
 	isPreviewReady: boolean;
 	setIsPreviewReady: Dispatch<SetStateAction<boolean>>;
-	setCurrentTime: Dispatch<SetStateAction<number>>;
+	onTimeUpdate: (time: number) => void;
 	setIsPlaying: Dispatch<SetStateAction<boolean>>;
 	setError: (message: string | null) => void;
 };
@@ -88,6 +88,11 @@ const PREVIEW_RENDER_SCALE_LABELS: Record<PreviewRenderScale, string> = {
 	"0.5": "50%",
 	"0.25": "25%",
 };
+
+/** Leaf subscriber so the per-frame time never re-renders the whole panel. */
+function PlayheadTimeLabel() {
+	return <>{formatTime(usePlaybackTime())}</>;
+}
 
 function formatTime(seconds: number) {
 	if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -106,7 +111,6 @@ export function EditorPreviewPanel(props: Props) {
 		previewAspectRatioValue,
 		videoPlaybackRef,
 		timelineRef,
-		currentTime,
 		isPlaying,
 		previewVolume,
 		setPreviewVolume,
@@ -129,7 +133,7 @@ export function EditorPreviewPanel(props: Props) {
 		setDuration,
 		isPreviewReady,
 		setIsPreviewReady,
-		setCurrentTime,
+		onTimeUpdate,
 		setIsPlaying,
 		setError,
 	} = props;
@@ -245,7 +249,6 @@ export function EditorPreviewPanel(props: Props) {
 									previewVersion={previewVersion}
 									aspectRatio={aspectRatio}
 									playbackRef={videoPlaybackRef}
-									currentTime={currentTime}
 									isPlaying={isPlaying}
 									previewVolume={previewVolume}
 									previewRenderScale={previewRenderScale}
@@ -258,7 +261,7 @@ export function EditorPreviewPanel(props: Props) {
 									effectiveShowCursor={effectiveShowCursor}
 									setDuration={setDuration}
 									setIsPreviewReady={setIsPreviewReady}
-									setCurrentTime={setCurrentTime}
+									onTimeUpdate={onTimeUpdate}
 									setIsPlaying={setIsPlaying}
 									setError={setError}
 									handlers={{
@@ -355,7 +358,7 @@ export function EditorPreviewPanel(props: Props) {
 				<div className="editor-playback-center z-10 flex items-center justify-center">
 					<div className="pointer-events-auto flex items-center gap-1.5">
 						<span className="mr-1 text-[10px] font-medium tabular-nums text-muted-foreground">
-							{formatTime(projection.timelinePlayheadTime)}
+							<PlayheadTimeLabel />
 						</span>
 						<Button
 							variant="ghost"

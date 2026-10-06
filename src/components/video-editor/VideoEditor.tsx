@@ -369,7 +369,6 @@ export default function VideoEditor() {
 		autoCaptionController,
 		effectiveShowCursor,
 		handleShowCursorChange,
-		currentTime,
 		isPlaying,
 		aspectRatio,
 		setAspectRatio,
