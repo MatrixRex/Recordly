@@ -1,11 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { OPEN_EDITOR_SECTION_EVENT } from "@/lib/announcementActions";
+import { loadAppSetting, saveAppSetting } from "@/lib/appSettings";
 import { type AnnouncementEditorSection, isAnnouncementEditorSection } from "@/lib/announcements";
 import type { AspectRatio } from "@/utils/aspectRatioUtils";
 import type { loadEditorPreferences } from "../editorPreferences";
 import type { TimelineEditorHandle } from "../timeline/TimelineEditor";
 import type { CropRegion, EditorEffectSection } from "../types";
 import type { VideoPlaybackRef } from "../VideoPlayback";
+import {
+	normalizePreviewRenderScale,
+	type PreviewRenderScale,
+} from "../videoPlayback/previewRenderScale";
+
+const PREVIEW_RENDER_SCALE_STORAGE_KEY = "editorPreviewRenderScale";
 
 type SessionPresentation = {
 	hideOverlayCursorByDefault?: boolean;
@@ -44,6 +51,13 @@ export function useEditorUiState(
 	const [whisperModelDownloadProgress, setWhisperModelDownloadProgress] = useState(0);
 	const [isGeneratingCaptions, setIsGeneratingCaptions] = useState(false);
 	const [previewVolume, setPreviewVolume] = useState(1);
+	const [previewRenderScale, setPreviewRenderScaleState] = useState<PreviewRenderScale>(() =>
+		normalizePreviewRenderScale(loadAppSetting<unknown>(PREVIEW_RENDER_SCALE_STORAGE_KEY)),
+	);
+	const setPreviewRenderScale = useCallback((scale: PreviewRenderScale) => {
+		setPreviewRenderScaleState(scale);
+		saveAppSetting(PREVIEW_RENDER_SCALE_STORAGE_KEY, scale);
+	}, []);
 	const [aspectRatio, setAspectRatio] = useState<AspectRatio>(initialPreferences.aspectRatio);
 	const [activeEffectSection, setActiveEffectSection] = useState<EditorEffectSection>("scene");
 	const [showCropModal, setShowCropModal] = useState(false);
@@ -139,6 +153,8 @@ export function useEditorUiState(
 		setIsGeneratingCaptions,
 		previewVolume,
 		setPreviewVolume,
+		previewRenderScale,
+		setPreviewRenderScale,
 		aspectRatio,
 		setAspectRatio,
 		activeEffectSection,

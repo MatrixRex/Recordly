@@ -89,6 +89,11 @@ import {
 } from "./types";
 import { isAnnotationActiveAtTime } from "./videoPlayback/annotationVisibility";
 import { getEffectiveNativeAspectRatio } from "./videoPlayback/effectiveAspectRatio";
+import {
+	DEFAULT_PREVIEW_RENDER_SCALE,
+	type PreviewRenderScale,
+	resolvePreviewRenderResolution,
+} from "./videoPlayback/previewRenderScale";
 import { createClipPlayback, findPreviewClipAtTimelineTime } from "./videoPlayback/clipPlayback";
 import { DEFAULT_FOCUS } from "./videoPlayback/constants";
 import {
@@ -205,6 +210,8 @@ interface VideoPlaybackProps {
 	onPreviewReadyChange?: (ready: boolean) => void;
 	onTimeUpdate: (time: number) => void;
 	currentTime: number;
+	/** Preview sharpness; changing it rebuilds the renderer. */
+	previewRenderScale?: PreviewRenderScale;
 	onPlayStateChange: (playing: boolean) => void;
 	onError: (error: string) => void;
 	wallpaper?: string;
@@ -290,6 +297,7 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 			onPreviewReadyChange,
 			onTimeUpdate,
 			currentTime: timelineTime,
+			previewRenderScale = DEFAULT_PREVIEW_RENDER_SCALE,
 			clipRegions,
 			onPlayStateChange,
 			onError,
@@ -538,7 +546,10 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 								backgroundAlpha: 0,
 								antialias: true,
 								failIfMajorPerformanceCaveat: false,
-								resolution: window.devicePixelRatio || 1,
+								resolution: resolvePreviewRenderResolution(
+									previewRenderScale,
+									window.devicePixelRatio,
+								),
 								autoDensity: true,
 								preference: backend,
 								autoStart: true,
@@ -564,7 +575,7 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 
 				throw new Error(summarizeRendererAttempts(attempts));
 			},
-			[],
+			[previewRenderScale],
 		);
 
 		const activeCaptionLayout = useMemo(() => {
@@ -939,7 +950,7 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 			}
 
 			const filterResolution = Math.max(
-				1,
+				0.25,
 				app.renderer.resolution || window.devicePixelRatio || 1,
 			);
 			const stageWidth = Math.max(1, stageSizeRef.current.width || app.screen.width);

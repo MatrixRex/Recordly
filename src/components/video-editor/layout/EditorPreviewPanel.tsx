@@ -37,6 +37,10 @@ import type { useAppearanceState } from "../state/useAppearanceState";
 import type { useTimelineState } from "../state/useTimelineState";
 import type { TimelineEditorHandle } from "../timeline/TimelineEditor";
 import type { VideoPlaybackRef } from "../VideoPlayback";
+import {
+	PREVIEW_RENDER_SCALES,
+	type PreviewRenderScale,
+} from "../videoPlayback/previewRenderScale";
 import { EditorVideoPreview } from "./EditorVideoPreview";
 
 type Props = {
@@ -52,6 +56,8 @@ type Props = {
 	isPlaying: boolean;
 	previewVolume: number;
 	setPreviewVolume: Dispatch<SetStateAction<number>>;
+	previewRenderScale: PreviewRenderScale;
+	setPreviewRenderScale: (scale: PreviewRenderScale) => void;
 	suspendRendering: boolean;
 	appearance: ReturnType<typeof useAppearanceState>;
 	timeline: ReturnType<typeof useTimelineState>;
@@ -72,6 +78,15 @@ type Props = {
 	setCurrentTime: Dispatch<SetStateAction<number>>;
 	setIsPlaying: Dispatch<SetStateAction<boolean>>;
 	setError: (message: string | null) => void;
+};
+
+const PREVIEW_RENDER_SCALE_LABELS: Record<PreviewRenderScale, string> = {
+	auto: "Auto",
+	native: "Full",
+	"1": "100%",
+	"0.75": "75%",
+	"0.5": "50%",
+	"0.25": "25%",
 };
 
 function formatTime(seconds: number) {
@@ -95,6 +110,8 @@ export function EditorPreviewPanel(props: Props) {
 		isPlaying,
 		previewVolume,
 		setPreviewVolume,
+		previewRenderScale,
+		setPreviewRenderScale,
 		suspendRendering,
 		appearance,
 		timeline,
@@ -163,6 +180,40 @@ export function EditorPreviewPanel(props: Props) {
 								<span className="h-1.5 w-1.5 rounded-full bg-[#2563EB]" />
 							) : null}
 						</Button>
+						<div className="h-4 w-px bg-foreground/20" />
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Button
+									variant="ghost"
+									size="sm"
+									className="h-7 gap-1 px-2 text-xs"
+									title={t(
+										"editor.preview.renderScaleHint",
+										"Lower the preview sharpness to play back faster. Export quality is not affected.",
+									)}
+								>
+									<span className="font-medium">
+										{t("editor.preview.renderScale", "Preview")}:{" "}
+										{PREVIEW_RENDER_SCALE_LABELS[previewRenderScale]}
+									</span>
+									<CaretDown className="h-3 w-3" />
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="center">
+								{PREVIEW_RENDER_SCALES.map((scale) => (
+									<DropdownMenuItem
+										key={scale}
+										onClick={() => setPreviewRenderScale(scale)}
+										className="flex cursor-pointer items-center justify-between gap-3 text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
+									>
+										<span>{PREVIEW_RENDER_SCALE_LABELS[scale]}</span>
+										{previewRenderScale === scale ? (
+											<Check className="h-3 w-3 text-[#2563EB]" />
+										) : null}
+									</DropdownMenuItem>
+								))}
+							</DropdownMenuContent>
+						</DropdownMenu>
 					</div>
 					<div
 						className="flex min-h-0 w-full flex-1 items-stretch px-4 py-3"
@@ -197,6 +248,7 @@ export function EditorPreviewPanel(props: Props) {
 									currentTime={currentTime}
 									isPlaying={isPlaying}
 									previewVolume={previewVolume}
+									previewRenderScale={previewRenderScale}
 									suspendRendering={suspendRendering}
 									appearance={appearance}
 									timeline={timeline}

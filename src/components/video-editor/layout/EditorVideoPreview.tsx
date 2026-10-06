@@ -5,6 +5,7 @@ import type { useAppearanceState } from "../state/useAppearanceState";
 import type { useTimelineState } from "../state/useTimelineState";
 import type { CursorTelemetryPoint, ZoomRegion } from "../types";
 import VideoPlayback, { type VideoPlaybackRef } from "../VideoPlayback";
+import type { PreviewRenderScale } from "../videoPlayback/previewRenderScale";
 
 type PlaybackProps = ComponentProps<typeof VideoPlayback>;
 type Handlers = Pick<
@@ -25,6 +26,7 @@ type Props = {
 	currentTime: number;
 	isPlaying: boolean;
 	previewVolume: number;
+	previewRenderScale: PreviewRenderScale;
 	suspendRendering: boolean;
 	appearance: ReturnType<typeof useAppearanceState>;
 	timeline: ReturnType<typeof useTimelineState>;
@@ -48,6 +50,7 @@ export function EditorVideoPreview({
 	currentTime,
 	isPlaying,
 	previewVolume,
+	previewRenderScale,
 	suspendRendering,
 	appearance,
 	timeline,
@@ -73,6 +76,7 @@ export function EditorVideoPreview({
 			onPreviewReadyChange={setIsPreviewReady}
 			onTimeUpdate={setCurrentTime}
 			currentTime={currentTime}
+			previewRenderScale={previewRenderScale}
 			onPlayStateChange={setIsPlaying}
 			onError={setError}
 			wallpaper={appearance.wallpaper}
